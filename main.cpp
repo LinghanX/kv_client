@@ -31,15 +31,14 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int main(int argc, char** argv) {
-    auto console = spdlog::stdout_color_mt("console");
-    console -> info("welcome to my key value store!");
+std::string make_tcp_query(
+        msg_type type,
+        std::string address,
+        std::string port_num,
+        std::string key,
+        std::string value) {
 
-    std::string address, port_num, user_input;
-    std::tie(address, port_num) = handle_input(argc, argv);
-
-    // --------- start connecting ------
-
+    const auto console = spdlog::get("console");
     int sockfd, numbytes;
     char buf[MAXDATASIZE];
     struct addrinfo hints, *servinfo, *p;
@@ -52,7 +51,6 @@ int main(int argc, char** argv) {
 
     if ((rv = getaddrinfo(address.c_str(), port_num.c_str(), &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return 1;
     }
 
     for(p = servinfo; p != NULL; p = p->ai_next) {
@@ -72,7 +70,6 @@ int main(int argc, char** argv) {
     }
     if (p == NULL) {
         fprintf(stderr, "client: failed to connect\n");
-        return 2;
     }
 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
@@ -81,52 +78,81 @@ int main(int argc, char** argv) {
     freeaddrinfo(servinfo);
 
     std::cout << "start session" << std::endl;
-    getline(std::cin, user_input);
-    std::vector<std::string> tokens;
 
-    char *input = strdup(user_input.c_str());
-    char *token = strtok(input, " ");
-    while (token != nullptr) {
-        tokens.push_back(token);
-        token = strtok(NULL, " ");
+    switch (type) {
+        case msg_type::GET: {
+            get_msg msg;
+            msg.type = 0;
+            std::size_t len = key.copy(msg.key, key.length(), 0);
+            msg.key[len] = '\0';
+            console -> info("sending msg");
+            if (send(sockfd, &msg, sizeof(get_msg), 0) <= 0)
+                console -> error("unable to send");
+            console -> info("i am here");
+
+            if (recv(sockfd, buf, sizeof(buf), 0) <= 0)
+                console -> error("no response");
+
+            std::string res(buf);
+            std::cout << "response is: " << buf << std::endl;
+            return res;
+        }
+        case msg_type::PUT: {
+            put_msg msg;
+            msg.type = 1;
+            htonl(msg.type);
+            strcpy(msg.key, key.c_str());
+            strcpy(msg.value, value.c_str());
+
+            console -> info("sending msg: type: {}, key: {}, val: {}, size: {}",
+                            msg.type, msg.key, msg.value, sizeof (put_msg));
+            if (send(sockfd, &msg, sizeof(put_msg), 0) <= 0)
+                console -> error("unable to send");
+
+            return "successful";
+        }
+        default:
+            return "error";
     }
+}
 
-    std::string command = tokens[0];
+int main(int argc, char** argv) {
+    auto console = spdlog::stdout_color_mt("console");
+    console -> info("welcome to my key value store!");
 
-    print_all(tokens);
+    // --------- start connecting ------
+    std::string address, port_num, user_input;
+    std::tie(address, port_num) = handle_input(argc, argv);
 
-    if (command == "get") {
-        get_msg msg;
-        msg.type = 0;
-        std::size_t len = tokens[1].copy(msg.key, tokens[1].length(), 0);
-        msg.key[len] = '\0';
-        console -> info("sending msg");
-        if (send(sockfd, &msg, sizeof(get_msg), 0) <= 0)
-            console -> error("unable to send");
-        console -> info("i am here");
+    while (true) {
+        getline(std::cin, user_input);
 
-        if (recv(sockfd, buf, sizeof(buf), 0) <= 0)
-            console -> error("no response");
+        std::vector<std::string> tokens;
 
-        std::cout << "response is: " << buf << std::endl;
-    } else if (command == "put") {
-        put_msg msg;
-        msg.type = 1;
-        htonl(msg.type);
-        std::size_t len = tokens[1].copy(msg.key, tokens[1].length(), 0);
-        msg.key[len] = '\0';
-        std::size_t len2 = tokens[2].copy(msg.value, tokens[2].length(), 0);
-        msg.key[len2] = '\0';
+        char *input = strdup(user_input.c_str());
+        char *token = strtok(input, " ");
 
-        console -> info("sending msg: type: {}, key: {}, val: {}, size: {}",
-                msg.type, msg.key, msg.value, sizeof (put_msg));
-        if (send(sockfd, &msg, sizeof(put_msg), 0) <= 0)
-            console -> error("unable to send");
-    } else if (command == "join") {
+        while (token != nullptr) {
+            tokens.push_back(token);
+            token = strtok(NULL, " ");
+        }
+
+        std::string command = tokens[0];
+
         print_all(tokens);
-    } else if (command == "kill") {
-        print_all(tokens);
-    } else {
-        console -> error("unable to recognize command");
+
+        if (command == "get") {
+            std::cout << make_tcp_query(msg_type::GET, address, port_num, tokens[1], "null") << std::endl;
+        } else if (command == "put") {
+            std::cout << make_tcp_query(msg_type::PUT, address, port_num, tokens[1], tokens[2]) << std::endl;
+        } else if (command == "join") {
+            print_all(tokens);
+        } else if (command == "kill") {
+            print_all(tokens);
+        } else {
+            console -> error("unable to recognize command");
+        }
+
+        std::memset(&user_input, 0, sizeof user_input);
     }
 }
