@@ -5,9 +5,9 @@
 #include "coordinator.h"
 #define TABLESIZE 1048576
 
-ssize_t hash_node(struct node_info node) {
+size_t hash_node(struct node_info node) {
     std::hash<std::string> hash_str;
-    return hash_str(node.addr + node.port);
+    return hash_str(node.addr + node.port) % TABLESIZE;
 }
 void Coordinator::add_node(std::string address, std::string port) {
     struct node_info local_node;
@@ -40,9 +40,16 @@ void Coordinator::kill(std::string addr, std::string port) {
     this -> remove_node(addr, port);
 }
 std::tuple<std::string, std::string> Coordinator::find_node(std::string key) {
+    auto console = spdlog::get("console");
     std::hash<std::string> hash_str;
-    ssize_t size = this -> ring.size();
-    ssize_t key_hash = hash_str(key);
+    size_t size = this -> ring.size();
+    size_t key_hash = hash_str(key) % TABLESIZE;
+
+    console -> info("we have a ring");
+    for (const auto &n : this -> ring) {
+        console -> info("addr: {}, port: {}, hash: {}",
+                n.addr, n.port, hash_node(n));
+    }
 
     struct node_info last_node = this -> ring[size - 1];
     struct node_info curr_node = this -> ring[0];
@@ -67,7 +74,11 @@ std::tuple<std::string, std::string> Coordinator::find_node(std::string key) {
 std::string Coordinator::get(std::string key) {
     std::string addr, port;
     std::tie(addr, port) = find_node(key);
-    return make_tcp_query(msg_type::GET, addr, port, key, nullptr);
+    std::cout
+    << "addr is: " << addr
+    << "port is: " << port
+    << std::endl;
+    return make_tcp_query(msg_type::GET, addr, port, key, "null");
 }
 void Coordinator::put(std::string key, std::string value) {
     std::string addr, port;

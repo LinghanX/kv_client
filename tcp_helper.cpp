@@ -69,7 +69,7 @@ std::string make_tcp_query(
             msg.type = 0;
             std::size_t len = key.copy(msg.key, key.length(), 0);
             msg.key[len] = '\0';
-            console -> info("sending msg");
+            console -> info("sending msg to addr: {} port: {}", address, port_num);
             if (send(sockfd, &msg, sizeof(get_msg), 0) <= 0)
                 console -> error("unable to send");
             console -> info("i am here");
@@ -88,7 +88,8 @@ std::string make_tcp_query(
             strcpy(msg.key, key.c_str());
             strcpy(msg.value, value.c_str());
 
-            console -> info("sending msg: type: {}, key: {}, val: {}, size: {}",
+            console -> info("putting msg to addr: {} port: {}", address, port_num);
+            console -> info("putting msg: type: {}, key: {}, val: {}, size: {}",
                             msg.type, msg.key, msg.value, sizeof (put_msg));
             if (send(sockfd, &msg, sizeof(put_msg), 0) <= 0)
                 console -> error("unable to send");

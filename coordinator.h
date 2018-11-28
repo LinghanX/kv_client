@@ -5,7 +5,6 @@
 #ifndef KV_COORDINATOR_COORDINATOR_H
 #define KV_COORDINATOR_COORDINATOR_H
 
-
 #include <vector>
 #include <string>
 #include <utility>
