@@ -22,14 +22,15 @@ protected:
     std::vector<node_info> ring;
     void add_node(std::string address, std::string port);
     void remove_node(std::string address, std::string port);
-    std::tuple<std::string, std::string> find_node(std::string);
+    void crash_node(std::string address, std::string port);
+    std::tuple<struct node_info, struct node_info> find_node(std::string);
 public:
     void init(std::string address, std::string port);
     std::string get(std::string key);
     void put(std::string key, std::string value);
     void join(std::string addr, std::string port);
     void kill(std::string addr, std::string port);
-//    void crash(std::string addr, std::string port);
+    void crash(std::string addr, std::string port);
 };
 
 

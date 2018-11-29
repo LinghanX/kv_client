@@ -79,6 +79,7 @@ std::string make_tcp_query(
 
             std::string res(buf);
             std::cout << "response is: " << buf << std::endl;
+            close(sockfd);
             return res;
         }
         case msg_type::PUT: {
@@ -94,6 +95,7 @@ std::string make_tcp_query(
             if (send(sockfd, &msg, sizeof(put_msg), 0) <= 0)
                 console -> error("unable to send");
 
+            close(sockfd);
             return "successful";
         }
         default:

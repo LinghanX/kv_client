@@ -13,6 +13,7 @@ enum msg_type {
     PUT,
     KILL,
     JOIN,
+    CRASH,
     ERROR
 };
 

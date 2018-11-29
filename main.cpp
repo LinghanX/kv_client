@@ -51,6 +51,8 @@ int main(int argc, char** argv) {
             coordinator.join(tokens[1], tokens[2]);
         } else if (command == "kill") {
             coordinator.kill(tokens[1], tokens[2]);
+        } else if (command == "crash") {
+            coordinator.crash(tokens[1], tokens[2]);
         } else {
             console -> error("unable to recognize command");
         }
