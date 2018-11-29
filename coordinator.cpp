@@ -65,12 +65,6 @@ std::tuple<struct node_info, struct node_info> Coordinator::find_node(std::strin
     size_t size = this -> ring.size();
     size_t key_hash = hash_str(key) % TABLESIZE;
 
-    console -> info("we have a ring");
-    for (const auto &n : this -> ring) {
-        console -> info("addr: {}, port: {}, hash: {}",
-                n.addr, n.port, hash_node(n));
-    }
-
     struct node_info last_node = this -> ring[size - 1];
     struct node_info curr_node = this -> ring[0];
     if (size == 0) perror("no valid node in the ring");

@@ -7,11 +7,6 @@
 
 #define MAXDATASIZE 1024
 
-void print_all(std::vector<std::string> tokens) {
-    for (const auto& n : tokens) {
-        std::cout << n << std::endl;
-    }
-}
 std::vector<std::string> parse_user_input(std::string user_input) {
     std::vector<std::string> tokens;
     char *input = strdup(user_input.c_str());
@@ -40,7 +35,6 @@ int main(int argc, char** argv) {
 
         std::vector<std::string> tokens = parse_user_input(user_input);
         std::string command = tokens[0];
-        print_all(tokens);
 
         if (command == "get") {
             auto val = coordinator.get(tokens[1]);
