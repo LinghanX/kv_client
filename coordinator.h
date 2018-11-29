@@ -12,10 +12,15 @@
 #include "message.h"
 #include "tcp_helper.h"
 
+struct kv {
+    std::string key;
+    std::string value;
+};
 struct node_info {
     std::string addr;
     std::string port;
     bool alive;
+    std::vector<struct kv> q;
 };
 class Coordinator {
 protected:

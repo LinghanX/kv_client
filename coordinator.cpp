@@ -31,11 +31,9 @@ void Coordinator::remove_node(std::string address, std::string port) {
             this -> ring.end());
 }
 void Coordinator::crash_node(std::string address, std::string port) {
-    int size = this -> ring.size();
-    for (int i = 0; i < size; i++) {
-        struct node_info curr = this -> ring[i];
-        if (curr.addr == address && curr.port == port) {
-            curr.alive = false;
+    for (auto& node : this -> ring) {
+        if (node.addr == address && node.port == port) {
+            node.alive = false;
         }
     }
 }
@@ -89,14 +87,27 @@ std::string Coordinator::get(std::string key) {
 
     if (pre.alive)
         return make_tcp_query(msg_type::GET, pre.addr, pre.port, key, "null");
-    else
+    else {
         return make_tcp_query(msg_type::GET, curr.addr, curr.port, key, "null");
+    }
 }
 void Coordinator::put(std::string key, std::string value) {
     struct node_info pre, curr;
     std::tie(pre, curr) = find_node(key);
     if (pre.alive)
         make_tcp_query(msg_type::PUT, pre.addr, pre.port, key, value);
+    else {
+        struct kv entry;
+        entry.key = key;
+        entry.value = value;
+        pre.q.push_back(entry);
+    }
     if (curr.alive)
         make_tcp_query(msg_type::PUT, curr.addr, curr.port, key, value);
+    else {
+        struct kv entry;
+        entry.key = key;
+        entry.value = value;
+        curr.q.push_back(entry);
+    }
 }
