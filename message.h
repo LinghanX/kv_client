@@ -14,6 +14,7 @@ enum msg_type {
     KILL,
     JOIN,
     CRASH,
+    REBOOT,
     ERROR
 };
 

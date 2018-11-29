@@ -53,6 +53,8 @@ int main(int argc, char** argv) {
             coordinator.kill(tokens[1], tokens[2]);
         } else if (command == "crash") {
             coordinator.crash(tokens[1], tokens[2]);
+        } else if (command == "reboot") {
+            coordinator.reboot(tokens[1], tokens[2]);
         } else {
             console -> error("unable to recognize command");
         }

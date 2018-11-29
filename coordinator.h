@@ -29,6 +29,7 @@ protected:
     void remove_node(std::string address, std::string port);
     void crash_node(std::string address, std::string port);
     std::tuple<struct node_info, struct node_info> find_node(std::string);
+    void push_entry(struct node_info node, struct kv entry);
 public:
     void init(std::string address, std::string port);
     std::string get(std::string key);
@@ -36,6 +37,7 @@ public:
     void join(std::string addr, std::string port);
     void kill(std::string addr, std::string port);
     void crash(std::string addr, std::string port);
+    void reboot(std::string addr, std::string port);
 };
 
 

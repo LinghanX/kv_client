@@ -37,6 +37,16 @@ void Coordinator::crash_node(std::string address, std::string port) {
         }
     }
 }
+void Coordinator::reboot(std::string addr, std::string port) {
+    for (auto& node : this -> ring) {
+        if (node.addr == addr && node.port == port) {
+            node.alive = true;
+            for (auto entry : node.q) {
+                make_tcp_query(msg_type::PUT, node.addr, node.port, entry.key, entry.value);
+            }
+        }
+    }
+}
 void Coordinator::init(std::string address, std::string port) {
     this -> add_node(std::move(address), std::move(port));
 }
@@ -91,6 +101,13 @@ std::string Coordinator::get(std::string key) {
         return make_tcp_query(msg_type::GET, curr.addr, curr.port, key, "null");
     }
 }
+void Coordinator::push_entry(struct node_info node, struct kv entry) {
+    for (auto& curr : this -> ring) {
+        if (curr.addr == node.addr && curr.port == node.port) {
+            curr.q.push_back(entry);
+        }
+    }
+}
 void Coordinator::put(std::string key, std::string value) {
     struct node_info pre, curr;
     std::tie(pre, curr) = find_node(key);
@@ -100,7 +117,7 @@ void Coordinator::put(std::string key, std::string value) {
         struct kv entry;
         entry.key = key;
         entry.value = value;
-        pre.q.push_back(entry);
+        push_entry(pre, entry);
     }
     if (curr.alive)
         make_tcp_query(msg_type::PUT, curr.addr, curr.port, key, value);
@@ -108,6 +125,6 @@ void Coordinator::put(std::string key, std::string value) {
         struct kv entry;
         entry.key = key;
         entry.value = value;
-        curr.q.push_back(entry);
+        push_entry(curr, entry);
     }
 }
